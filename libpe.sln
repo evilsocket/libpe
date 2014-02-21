@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpe", "libpe\libpe.vcxproj", "{EB5CFFE8-2113-450C-955B-05F703B608A4}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example", "example\example.vcxproj", "{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "peview", "peview\peview.vcxproj", "{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

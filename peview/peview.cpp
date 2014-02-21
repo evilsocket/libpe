@@ -17,13 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with libpe.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "..\libpe\libpe.h"
-
-#ifdef _DEBUG
-#pragma comment( lib, "..\\Debug\\libpe" )
-#else
-#pragma comment( lib, "..\\Release\\libpe" )
-#endif
+#include <libpe.h>
 
 int main( int argc, char **argv )
 {
