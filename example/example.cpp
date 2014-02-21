@@ -29,8 +29,6 @@ int main( int argc, char **argv )
 {
 	PE pe = {0}; 
 	DWORD status;
-	unsigned char hash[16] = {0};
-	char szHash[33] = {0};
 
 	if( argc < 2 )
 	{
