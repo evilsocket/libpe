@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libpe", "libpe\libpe.vcxproj", "{EB5CFFE8-2113-450C-955B-05F703B608A4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example", "example\example.vcxproj", "{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EB5CFFE8-2113-450C-955B-05F703B608A4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EB5CFFE8-2113-450C-955B-05F703B608A4}.Debug|Win32.Build.0 = Debug|Win32
+		{EB5CFFE8-2113-450C-955B-05F703B608A4}.Debug|Win32.Deploy.0 = Debug|Win32
+		{EB5CFFE8-2113-450C-955B-05F703B608A4}.Release|Win32.ActiveCfg = Release|Win32
+		{EB5CFFE8-2113-450C-955B-05F703B608A4}.Release|Win32.Build.0 = Release|Win32
+		{EB5CFFE8-2113-450C-955B-05F703B608A4}.Release|Win32.Deploy.0 = Release|Win32
+		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Debug|Win32.Build.0 = Debug|Win32
+		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Debug|Win32.Deploy.0 = Debug|Win32
+		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Release|Win32.ActiveCfg = Release|Win32
+		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Release|Win32.Build.0 = Release|Win32
+		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Release|Win32.Deploy.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
