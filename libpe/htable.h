@@ -102,6 +102,7 @@ int			  ht_dword_cmp( void *a, void *b );
 int			  ht_word_cmp( void *a, void *b );
 unsigned long ht_str_ihash( void *k );
 unsigned long ht_str_hash( void *k );
+unsigned long ht_wstr_hash( void *k );
 
 #define HT_CREATE_BY_QWORD() \
 	ht_create( NULL, ht_qword_cmp, NULL, NULL, NULL, NULL )
@@ -117,3 +118,6 @@ unsigned long ht_str_hash( void *k );
 
 #define HT_CREATE_BY_ISTRING() \
 	ht_create( NULL, (ht_cmp_t)_stricmp, ht_str_ihash, NULL, NULL, NULL )
+
+#define HT_CREATE_BY_WSTRING() \
+	ht_create( NULL, (ht_cmp_t)wcscmp, ht_wstr_hash, NULL, NULL, NULL )

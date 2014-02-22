@@ -180,3 +180,17 @@ unsigned long ht_str_hash( void *k )
 
     return hash;
 }
+
+unsigned long ht_wstr_hash( void *k )
+{
+	unsigned long hash = (unsigned long)5381;
+	const wchar_t *p = (const wchar_t *)k;
+	size_t len = wcslen( p );
+
+    while( len-- )
+	{
+        hash = ((hash << 5) + hash) + (*p++);
+	}
+
+    return hash;
+}

@@ -4,12 +4,12 @@
  * Copyleft of Simone Margaritelli aka evilsocket <evilsocket@gmail.com>
  * http://www.evilsocket.net/
  *
- * Hybris is free software: you can redistribute it and/or modify
+ * libpe is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Hybris is distributed in the hope that it will be useful,
+ * libpe is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -90,10 +90,9 @@
      ((ntheader))->FileHeader.SizeOfOptionalHeader   \
     ))
 
-#pragma endregion
+typedef void *(* PE_STRING_DUP)( void * );
 
-extern "C"
-{
+#pragma endregion
 
 #pragma region Utilities
 
@@ -200,6 +199,52 @@ ULONGLONG peRawOffsetByVA( PE *pe, ULONGLONG va )
 	return qwOffset >= pe->dwFileSize ? PE_INVALID_OFFSET : qwOffset;
 }
 
+static int peIsPrintable( int byte, PE_STRING_ENCODING encoding )
+{
+	return encoding == Ascii ? ( byte >= -1 && byte <= 255 && isprint(byte) ) : iswprint(byte);
+}
+
+template< typename T> void peExtractStrings( PE *pe, DWORD dwMinSize, PE_STRING_ENCODING encoding, PE_STRING_DUP dup, ht_t *LookupTable )
+{
+#define STRING_BUFF_SIZE 0xFFFF
+
+	T zBuffer[STRING_BUFF_SIZE] = {0};
+	int byte = 0;
+	DWORD dwOffset, dwCurrent = 0;
+	PE_STRING *pString = NULL;
+
+	for( dwOffset = 0; dwOffset < pe->dwFileSize; dwOffset += sizeof(T) )
+	{
+		byte = *(T *)&pe->pData[dwOffset];
+		if( peIsPrintable( byte, encoding ) == false )
+		{
+			if( dwCurrent > dwMinSize )
+			{
+				zBuffer[dwCurrent] = 0x00;
+
+				if( ht_get( LookupTable, zBuffer ) == NULL )
+				{
+					pString = (PE_STRING *)malloc( sizeof(PE_STRING) );
+
+					pString->Encoding   = encoding;
+					pString->CharLength = dwCurrent - 1;
+					pString->ByteLength = pString->CharLength * sizeof(T);
+					pString->Data		= (BYTE *)dup(zBuffer);
+
+					ht_add( LookupTable, pString->Data, pString );
+					ll_append( &pe->Strings.List, pString );
+				}
+			}
+
+			dwCurrent = 0;
+		}
+		else if( dwCurrent < STRING_BUFF_SIZE - 2 )
+		{
+			zBuffer[dwCurrent++] = byte;
+		}
+	}
+}
+
 #pragma endregion
 
 #pragma region Internals
@@ -222,7 +267,7 @@ DWORD peParseBuffer( PE *pe )
 		return ERROR_NOT_SUPPORTED;
 	}
 
-	PE_SAFE_CAST( pe->Headers.NT, IMAGE_NT_HEADERS, pe->Headers.DOS->e_lfanew );
+	PE_SAFE_CAST( pe->Headers.NT, IMAGE_NT_HEADERS, (ULONG)pe->Headers.DOS->e_lfanew );
 	if( pe->Headers.NT->Signature != IMAGE_NT_SIGNATURE )
 	{
 		return ERROR_NOT_SUPPORTED;
@@ -958,6 +1003,28 @@ DWORD peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName,
 	}
 }
 
+DWORD peExtractStrings( PE *pe, DWORD dwMinLength, bool bFullEncoding )
+{
+	if( PE_IS_PARSED( pe, STRINGS ) == FALSE )
+	{
+		pe->Strings.AsciiTable   = HT_CREATE_BY_STRING();
+		pe->Strings.UnicodeTable = HT_CREATE_BY_WSTRING();
+
+		ll_init( &pe->Strings.List );
+
+		peExtractStrings<char>( pe, dwMinLength, Ascii, (PE_STRING_DUP)_strdup, pe->Strings.AsciiTable );
+
+		if( bFullEncoding )
+		{
+			peExtractStrings<wchar_t>( pe, dwMinLength, Unicode, (PE_STRING_DUP)_wcsdup, pe->Strings.UnicodeTable );
+		}
+
+		PE_SET_PARSED( pe, STRINGS );
+	}
+
+	return pe->Strings.List.elements;
+}
+
 void peClose( PE *pe )
 {
 	if( pe->hFile != INVALID_HANDLE_VALUE )
@@ -1013,5 +1080,3 @@ void peClose( PE *pe )
 }
 
 #pragma endregion
-
-}

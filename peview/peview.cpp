@@ -42,7 +42,7 @@ int main( int argc, char **argv )
 	printf( "ENTRY POINT : %08llX ( %08llX )\n", pe.EntryPoint.VA, pe.EntryPoint.Offset );
 
 	printf( "\n" );
-	
+
 	printf( "SECTIONS ( %d ):\n", pe.Sections.dwNumber );
 
 	// print each section name, start address, end address raw size and virtual size
@@ -105,6 +105,24 @@ int main( int argc, char **argv )
 			}
 		}
 	}
+
+	/*
+	 * Uncomment to print ascii and unicode strings.
+	 *
+	 *	peExtractStrings( &pe, 5, true );
+	 *
+	 *	PE_FOREACH_STRING( &pe, pString )
+	 *	{
+	 *		if( pString->Encoding == Ascii )
+	 *		{
+	 *			printf( "%s\n", pString->Data );
+	 *		}
+	 *		else
+	 *		{
+	 *			printf( "%S\n", pString->Data );
+	 *		}
+	 *	}
+	 */
 
 done:
 

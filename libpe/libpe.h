@@ -33,6 +33,8 @@
 #define PE_EXPORTS_PARSED  (1 << 2)
 //! Import directory was parsed.
 #define PE_IMPORTS_PARSED  (1 << 3)
+//! Unicode and Ascii strings were extracted.
+#define PE_STRINGS_PARSED  (1 << 4)
 
 //! No extra action, parse import table as it is.
 #define PE_IMPORT_OPT_DEFAULT          0x00000000
@@ -75,6 +77,10 @@
 //! Macro to easily loop symbols inside a PE_IMPORT_MODULE structure pointer.
 #define PE_FOREACH_MODULE_SYMBOL( MODULE, SYM_VAR_NAME ) \
 	ll_foreach_data( &(MODULE)->Symbols, ll_mod_symbol, PE_SYMBOL, SYM_VAR_NAME )
+
+//! Macro to easily loop strings.
+#define PE_FOREACH_STRING( PE, STR_VAR_NAME ) \
+	ll_foreach_data( &(PE)->Strings.List, lli, PE_STRING, STR_VAR_NAME )
 
 /*
  * A structure representing an address inside the PE.
@@ -184,6 +190,46 @@ typedef struct
 PE_HEADERS;
 
 /*
+ * String encoding.
+ */
+typedef enum
+{
+	Ascii,
+	Unicode
+}
+PE_STRING_ENCODING;
+
+/*
+ * Structure representing a string.
+ */
+typedef struct
+{
+	//! Buffer of the string.
+	BYTE *Data;
+	//! Length in bytes of the string ( > CharLength for Unicode ).
+	DWORD ByteLength;
+	//! Length in characters of the string.
+	DWORD CharLength;
+	//! Encoding of the string.
+	PE_STRING_ENCODING Encoding;
+}
+PE_STRING;
+
+/*
+ * Container structure of strings extracted from the file.
+ */
+typedef struct
+{
+	//! Fast Ascii encoded string lookup table.
+	ht_t *AsciiTable;
+	//! Fast Unicode encoded string lookup table.
+	ht_t *UnicodeTable;
+	//! Global list of strings.
+	ll_t List;
+}
+PE_STRINGS;
+
+/*
  * PE main container structure.
  */
 typedef struct 
@@ -199,7 +245,7 @@ typedef struct
 	//! Handle to the memory map, NULL if peOpenMemory was used.
 	HANDLE hMap;
 	//! Memory buffer of the file.
-	PBYTE  pData;
+	PBYTE pData;
 	//! Main headers.
 	PE_HEADERS Headers;
     //! Image base address.
@@ -214,6 +260,8 @@ typedef struct
 	PE_EXPORT_TABLE ExportTable;
 	//! Import table.
 	PE_IMPORT_TABLE ImportTable;
+	//! Strings
+	PE_STRINGS Strings;
 }
 PE;
 
@@ -351,6 +399,16 @@ DWORD peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE *
 //! @return ERROR_SUCCESS on success, or ERROR_NOT_FOUND if the specified 
 //!			symbol can't found.
 DWORD peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol );
+
+//! Extract printable strings from the PE file.
+//!
+//! @param pe pointer to a PE structure initialized with peOpen(File|Buffer).
+//! @param dwMinLength minimum length of a string to be extracted.
+//! @param bFullEncoding set to true to extract both Ascii and Unicode strings, 
+//!						 false to extract only Ascii strings.
+//!
+//! @return The total number of succesfully extracted strings.
+DWORD peExtractStrings( PE *pe, DWORD dwMinLength, bool bFullEncoding );
 
 //! Close handles and free resources of the PE structure.
 //!
