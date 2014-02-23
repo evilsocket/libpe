@@ -92,7 +92,7 @@ void *ht_get( ht_t *ht, void *key )
 {
 	if( ht && key )
 	{
-		hash_t hash = ( ht->key_hash ? ht->key_hash( key ) % HT_N_BUCKETS : (unsigned long)key % HT_N_BUCKETS );    
+		hash_t hash = ( ht->key_hash ? ht->key_hash( key ) % HT_N_BUCKETS : (uint32_t)key % HT_N_BUCKETS );    
 		ht_entry_t *entry = NULL,               
 				   *bucket = NULL;
 
@@ -138,24 +138,24 @@ void ht_destroy( ht_t *ht )
     free( ht );
 }
 
-int ht_qword_cmp( void *a, void *b )
+int32_t ht_qword_cmp( void *a, void *b )
 {
-	return (unsigned long long)a == (unsigned long long)b ? 0 : 1;
+	return (uint64_t)a == (uint64_t)b ? 0 : 1;
 }
 
-int ht_dword_cmp( void *a, void *b )
+int32_t ht_dword_cmp( void *a, void *b )
 {
-	return (unsigned long)a == (unsigned long)b ? 0 : 1;
+	return (uint32_t)a == (uint32_t)b ? 0 : 1;
 }
 
-int ht_word_cmp( void *a, void *b )
+int32_t ht_word_cmp( void *a, void *b )
 {
-	return (unsigned short)a == (unsigned short)b ? 0 : 1;
+	return (uint16_t)a == (uint16_t)b ? 0 : 1;
 }
 
-unsigned long ht_str_ihash( void *k )
+uint32_t ht_str_ihash( void *k )
 {
-	unsigned long hash = (unsigned long)5381;
+	uint32_t hash = (uint32_t)5381;
 	const char *p = (const char *)k;
 	size_t len = strlen( p );
 
@@ -167,9 +167,9 @@ unsigned long ht_str_ihash( void *k )
     return hash;
 }
 
-unsigned long ht_str_hash( void *k )
+uint32_t ht_str_hash( void *k )
 {
-	unsigned long hash = (unsigned long)5381;
+	uint32_t hash = (uint32_t)5381;
 	const char *p = (const char *)k;
 	size_t len = strlen( p );
 
@@ -181,9 +181,9 @@ unsigned long ht_str_hash( void *k )
     return hash;
 }
 
-unsigned long ht_wstr_hash( void *k )
+uint32_t ht_wstr_hash( void *k )
 {
-	unsigned long hash = (unsigned long)5381;
+	uint32_t hash = (uint32_t)5381;
 	const wchar_t *p = (const wchar_t *)k;
 	size_t len = wcslen( p );
 

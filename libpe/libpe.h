@@ -61,7 +61,7 @@
 //! Macro to easily loop PE sections.
 #define PE_FOREACH_SECTION( PE, SEC_VAR_NAME ) \
 	PIMAGE_SECTION_HEADER SEC_VAR_NAME = NULL; \
-	DWORD __peForeachSectionIndex = 0; \
+	uint32_t __peForeachSectionIndex = 0; \
 	for( __peForeachSectionIndex = 0, SEC_VAR_NAME = &(PE)->Sections.pHeaders[0]; \
 		 __peForeachSectionIndex < (PE)->Sections.dwNumber && ( SEC_VAR_NAME = &(PE)->Sections.pHeaders[__peForeachSectionIndex] ); \
 		 ++__peForeachSectionIndex )
@@ -88,11 +88,11 @@
 typedef struct
 {
 	//! Virtual address ( base + RVA )
-	ULONGLONG VA;
+	uint64_t VA;
 	//! Absolute raw offset inside the file.
-	ULONGLONG Offset;
+	uint64_t Offset;
 	//! Pointer to data inside the file.
-	PBYTE Data;
+	uint8_t *Data;
 }
 PE_ADDRESS;
 
@@ -104,7 +104,7 @@ typedef struct
 	//! Pointer to the first section header.
 	PIMAGE_SECTION_HEADER pHeaders;
 	//! Number of section headers.
-	DWORD				  dwNumber;
+	uint32_t			  dwNumber;
 }
 PE_SECTIONS;
 
@@ -116,7 +116,7 @@ typedef struct
 	//! Name of the symbol.
 	char	   Name[0xFF];
 	//! Ordinal number.
-	WORD       Ordinal;
+	uint16_t   Ordinal;
 	//! Address of the symbol.
 	PE_ADDRESS Address;
 }
@@ -205,11 +205,11 @@ PE_STRING_ENCODING;
 typedef struct
 {
 	//! Buffer of the string.
-	BYTE *Data;
+	uint8_t *Data;
 	//! Length in bytes of the string ( > CharLength for Unicode ).
-	DWORD ByteLength;
+	uint32_t ByteLength;
 	//! Length in characters of the string.
-	DWORD CharLength;
+	uint32_t CharLength;
 	//! Encoding of the string.
 	PE_STRING_ENCODING Encoding;
 }
@@ -235,23 +235,23 @@ PE_STRINGS;
 typedef struct 
 {
 	//! Current parsing state of this PE, a mask of PE_*_PARSED flags.
-	DWORD dwParseState;
+	uint32_t dwParseState;
 	//! File name of the PE or "[ADDRESS]" if peOpenMemory was used.
 	char szFileName[MAX_PATH + 1];
 	//! Size of the file/buffer.
-	DWORD dwFileSize;
+	uint32_t dwFileSize;
 	//! Handle to the file, NULL if peOpenMemory was used.
 	HANDLE hFile;
 	//! Handle to the memory map, NULL if peOpenMemory was used.
 	HANDLE hMap;
 	//! Memory buffer of the file.
-	PBYTE pData;
+	uint8_t *pData;
 	//! Main headers.
 	PE_HEADERS Headers;
     //! Image base address.
-	ULONGLONG qwBaseAddress;
+	uint64_t qwBaseAddress;
 	//! Image size in memory ( might be different to dwFileSize due to alignment ).
-	DWORD dwImageSize;
+	uint32_t dwImageSize;
 	//! PE section headers.
 	PE_SECTIONS Sections;
 	//! Entry point address.
@@ -279,7 +279,7 @@ extern "C"
 //!
 //! @remarks This function will set the PE_SECTIONS_PARSED and PE_ENTRY_PARSED parse 
 //!			 status flags.
-DWORD peOpenFile( PE *pe, const char *pszFileName );
+uint32_t peOpenFile( PE *pe, const char *pszFileName );
 
 //! Parse a memory buffer.
 //!
@@ -293,7 +293,7 @@ DWORD peOpenFile( PE *pe, const char *pszFileName );
 //!
 //! @remarks This function will set the PE_SECTIONS_PARSED and PE_ENTRY_PARSED parse 
 //!			 status flags.
-DWORD peOpenBuffer( PE *pe, PBYTE pData, DWORD dwSize );
+uint32_t peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize );
 
 //! Translate a virtual address inside the PE into a PE_ADDRESS structure.
 //!
@@ -302,7 +302,7 @@ DWORD peOpenBuffer( PE *pe, PBYTE pData, DWORD dwSize );
 //! @param pAddress the PE_ADDRESS structure pointer that will be filled.
 //!
 //! @return TRUE if the translation was successfull, otherwise FALSE. 
-BOOL peResolveVirtualAddress( PE *pe, ULONGLONG qwVirtualAddress, PE_ADDRESS *pAddress );
+BOOL peResolveVirtualAddress( PE *pe, uint64_t qwVirtualAddress, PE_ADDRESS *pAddress );
 
 //! Get the PE_ADDRESS structure of the given section.
 //!
@@ -331,7 +331,7 @@ PIMAGE_SECTION_HEADER peGetSectionByName( PE *pe, const char *pszName );
 //!			was not found.
 //!
 //! @remarks This function will set the PE_EXPORTS_PARSED parse status flags.
-DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions = PE_EXPORT_OPT_DEFAULT );
+uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions = PE_EXPORT_OPT_DEFAULT );
 
 //! Search an exported symbol given its name.
 //!
@@ -342,7 +342,7 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions = PE_EXPOR
 //! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the export table was
 //!			not yet parsed or ERROR_NOT_FOUND if the specified symbol can't be
 //!			found.
-DWORD peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol );
+uint32_t peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol );
 
 //! Search an exported symbol given its virtual address.
 //!
@@ -355,7 +355,7 @@ DWORD peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymb
 //!			found.
 //!
 //! @remarks The address must be in its absolute form ( base + rva ).
-DWORD peGetExportedSymbolByAddress( PE *pe, ULONGLONG qwAddress, PE_SYMBOL **ppSymbol );
+uint32_t peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **ppSymbol );
 
 //! Search an exported symbol given its ordinal.
 //!
@@ -366,7 +366,7 @@ DWORD peGetExportedSymbolByAddress( PE *pe, ULONGLONG qwAddress, PE_SYMBOL **ppS
 //! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the export table was
 //!			not yet parsed or ERROR_NOT_FOUND if the specified symbol can't be
 //!			found.
-DWORD peGetExportedSymbolByOrdinal( PE *pe, WORD wOrdinal, PE_SYMBOL **ppSymbol );
+uint32_t peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **ppSymbol );
 
 //! Parse the import table of the PE.
 //!
@@ -377,7 +377,7 @@ DWORD peGetExportedSymbolByOrdinal( PE *pe, WORD wOrdinal, PE_SYMBOL **ppSymbol 
 //!			was not found.
 //!
 //! @remarks This function will set the PE_IMPORTS_PARSED parse status flags.
-DWORD peParseImportTable( PE *pe, DWORD dwOptions = PE_IMPORT_OPT_DEFAULT );
+uint32_t peParseImportTable( PE *pe, uint32_t dwOptions = PE_IMPORT_OPT_DEFAULT );
 
 //! Search an imported module given its name.
 //!
@@ -388,7 +388,7 @@ DWORD peParseImportTable( PE *pe, DWORD dwOptions = PE_IMPORT_OPT_DEFAULT );
 //! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the import table was
 //!			not yet parsed or ERROR_NOT_FOUND if the specified module can't be
 //!			found.
-DWORD peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule );
+uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule );
 
 //! Search an imported symbol given its name.
 //!
@@ -398,7 +398,7 @@ DWORD peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE *
 //!
 //! @return ERROR_SUCCESS on success, or ERROR_NOT_FOUND if the specified 
 //!			symbol can't found.
-DWORD peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol );
+uint32_t peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol );
 
 //! Extract printable strings from the PE file.
 //!
@@ -408,7 +408,7 @@ DWORD peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName,
 //!						 false to extract only Ascii strings.
 //!
 //! @return The total number of succesfully extracted strings.
-DWORD peExtractStrings( PE *pe, DWORD dwMinLength, bool bFullEncoding );
+uint32_t peExtractStrings( PE *pe, uint32_t dwMinLength, bool bFullEncoding );
 
 //! Close handles and free resources of the PE structure.
 //!

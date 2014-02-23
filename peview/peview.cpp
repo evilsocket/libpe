@@ -18,6 +18,7 @@
  * along with libpe.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <libpe.h>
+#include <stdio.h>
 
 int main( int argc, char **argv )
 {

@@ -26,7 +26,7 @@
 
 #pragma region Macros
 
-#define PE_INVALID_OFFSET ((ULONGLONG)-1)
+#define PE_INVALID_OFFSET ((uint64_t)-1)
 
 #define PE_IS_VALID_ADDRESS( PEADDR ) \
 	( (PEADDR).VA     != PE_INVALID_OFFSET && \
@@ -96,11 +96,11 @@ typedef void *(* PE_STRING_DUP)( void * );
 
 #pragma region Utilities
 
-inline void peCopyString( char *pszDest, char *pszSource, DWORD dwSize )
+inline void peCopyString( char *pszDest, char *pszSource, uint32_t dwSize )
 {
 	char *pd = pszDest, *ps = pszSource;
-	BYTE b;
-	DWORD i;
+	uint8_t b;
+	uint32_t i;
 
 	ZeroMemory( pszDest, dwSize );
 
@@ -108,7 +108,7 @@ inline void peCopyString( char *pszDest, char *pszSource, DWORD dwSize )
 	{
 		__try
 		{
-			b = (BYTE)*ps;
+			b = (uint8_t)*ps;
 		}
 		__except(EXCEPTION_EXECUTE_HANDLER)
 		{
@@ -156,20 +156,20 @@ bool peIsValidImportDescriptor( PIMAGE_IMPORT_DESCRIPTOR pDescriptor )
 
 bool peFileExists( const char *pszFileName )
 {
-	DWORD dwAttrib = GetFileAttributes(pszFileName);
+	uint32_t dwAttrib = GetFileAttributes(pszFileName);
 
 	return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-PIMAGE_SECTION_HEADER peSectionByVA( PE *pe, ULONGLONG va ) 
+PIMAGE_SECTION_HEADER peSectionByVA( PE *pe, uint64_t va ) 
 {
 	PIMAGE_SECTION_HEADER pSectionHeader = pe->Sections.pHeaders;
 
-	for( DWORD i = 0; i < pe->Sections.dwNumber; i++, pSectionHeader++ )
+	for( uint32_t i = 0; i < pe->Sections.dwNumber; i++, pSectionHeader++ )
 	{
 		if( peIsValidSectionHeader( pSectionHeader ) )
 		{
-			ULONGLONG qwStart = pe->qwBaseAddress + pSectionHeader->VirtualAddress,
+			uint64_t qwStart = pe->qwBaseAddress + pSectionHeader->VirtualAddress,
 					  qwEnd = qwStart + PE_SECTION_HEADER_SIZE( pSectionHeader );
 
 			if( PE_IS_ADDRESS_BETWEEN( qwStart, qwEnd, va ) )
@@ -182,10 +182,10 @@ PIMAGE_SECTION_HEADER peSectionByVA( PE *pe, ULONGLONG va )
 	return 0;
 }
 
-ULONGLONG peRawOffsetByVA( PE *pe, ULONGLONG va ) 
+uint64_t peRawOffsetByVA( PE *pe, uint64_t va ) 
 {
 	PIMAGE_SECTION_HEADER pSectionHeader;
-	ULONGLONG qwOffset, qwDelta;
+	uint64_t qwOffset, qwDelta;
 
 	pSectionHeader = peSectionByVA( pe, va );
 	if ( !pSectionHeader )
@@ -204,13 +204,13 @@ static int peIsPrintable( int byte, PE_STRING_ENCODING encoding )
 	return encoding == Ascii ? ( byte >= -1 && byte <= 255 && isprint(byte) ) : iswprint(byte);
 }
 
-template< typename T> void peExtractStrings( PE *pe, DWORD dwMinSize, PE_STRING_ENCODING encoding, PE_STRING_DUP dup, ht_t *LookupTable )
+template< typename T> void peExtractStrings( PE *pe, uint32_t dwMinSize, PE_STRING_ENCODING encoding, PE_STRING_DUP dup, ht_t *LookupTable )
 {
 #define STRING_BUFF_SIZE 0xFFFF
 
 	T zBuffer[STRING_BUFF_SIZE] = {0};
 	int byte = 0;
-	DWORD dwOffset, dwCurrent = 0;
+	uint32_t dwOffset, dwCurrent = 0;
 	PE_STRING *pString = NULL;
 
 	for( dwOffset = 0; dwOffset < pe->dwFileSize; dwOffset += sizeof(T) )
@@ -229,7 +229,7 @@ template< typename T> void peExtractStrings( PE *pe, DWORD dwMinSize, PE_STRING_
 					pString->Encoding   = encoding;
 					pString->CharLength = dwCurrent - 1;
 					pString->ByteLength = pString->CharLength * sizeof(T);
-					pString->Data		= (BYTE *)dup(zBuffer);
+					pString->Data		= (uint8_t *)dup(zBuffer);
 
 					ht_add( LookupTable, pString->Data, pString );
 					ll_append( &pe->Strings.List, pString );
@@ -249,7 +249,7 @@ template< typename T> void peExtractStrings( PE *pe, DWORD dwMinSize, PE_STRING_
 
 #pragma region Internals
 
-DWORD peParseBuffer( PE *pe )
+uint32_t peParseBuffer( PE *pe )
 {
 #define PE_SAFE_CAST( WHAT, TYPE, POS ) \
 	if( POS < pe->dwFileSize && pe->dwFileSize - POS >= sizeof(TYPE) ) \
@@ -322,9 +322,9 @@ DWORD peParseBuffer( PE *pe )
  * - The Windows directory. The GetWindowsDirectory function retrieves the path of this directory.
  * - The directories listed in the PATH environment variable.
  */
-DWORD peLocateModule( PE *exe, PE_IMPORT_MODULE *pModule, PE *peModule )
+uint32_t peLocateModule( PE *exe, PE_IMPORT_MODULE *pModule, PE *peModule )
 {
-	DWORD status = ERROR_NOT_FOUND;
+	uint32_t status = ERROR_NOT_FOUND;
 	char szExeFilePath[MAX_PATH + 1] = {0},
 		 szModuleFilePath[MAX_PATH + 1] = {0},
 		 szSystemDirectory[MAX_PATH + 1] = {0},
@@ -400,9 +400,9 @@ DWORD peLocateModule( PE *exe, PE_IMPORT_MODULE *pModule, PE *peModule )
 
 #pragma region API
 
-DWORD peOpenFile( PE *pe, const char *pszFileName )
+uint32_t peOpenFile( PE *pe, const char *pszFileName )
 {
-	DWORD status = ERROR_SUCCESS;
+	uint32_t status = ERROR_SUCCESS;
 
 	ZeroMemory( pe, sizeof(PE) );
 
@@ -434,7 +434,7 @@ DWORD peOpenFile( PE *pe, const char *pszFileName )
 		goto done;
     }
 
-	pe->pData = (PBYTE)MapViewOfFile( pe->hMap, FILE_MAP_READ, 0, 0, 0 );
+	pe->pData = (uint8_t *)MapViewOfFile( pe->hMap, FILE_MAP_READ, 0, 0, 0 );
     if( pe->pData == NULL )
     {
         status = GetLastError();
@@ -459,9 +459,9 @@ done:
 	return status;
 }
 
-DWORD peOpenBuffer( PE *pe, PBYTE pData, DWORD dwSize )
+uint32_t peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize )
 {
-	DWORD status = ERROR_SUCCESS;
+	uint32_t status = ERROR_SUCCESS;
 
 	ZeroMemory( pe, sizeof(PE) );
 
@@ -488,7 +488,7 @@ done:
 	return status;
 }
 
-BOOL peResolveVirtualAddress( PE *pe, ULONGLONG qwVirtualAddress, PE_ADDRESS *pAddress )
+BOOL peResolveVirtualAddress( PE *pe, uint64_t qwVirtualAddress, PE_ADDRESS *pAddress )
 {
 	PE_ADDRESS_FROM_VA
 	( 
@@ -521,13 +521,13 @@ PIMAGE_SECTION_HEADER peGetSectionByName( PE *pe, const char *pszName )
 	return NULL;
 }
 
-DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EXPORT_OPT_DEFAULT */ )
+uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /* = PE_EXPORT_OPT_DEFAULT */ )
 {
-	DWORD status = ERROR_SUCCESS;
+	uint32_t status = ERROR_SUCCESS;
 
 	if( PE_IS_PARSED( pe, EXPORTS ) == FALSE )
 	{
-		DWORD dwExportRVA  = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress ),
+		uint32_t dwExportRVA  = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress ),
 			  dwExportSize = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size );
 
 		if( dwExportRVA != 0 && dwExportSize != 0 )
@@ -543,14 +543,14 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EX
 			{
 				PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)pe->ExportTable.Address.Data;
 				
-				PDWORD pdwFunctions, 
-					   pdwFunctionNames;
-				PWORD  pwOrdinals;
-				DWORD  dwCurrent = 0;
+				uint32_t *pdwFunctions, 
+						 *pdwFunctionNames;
+				uint16_t *pwOrdinals;
+				uint32_t  dwCurrent = 0;
 
-				pdwFunctions     = (PDWORD)PE_GET_POINTER( pe, pExportDirectory->AddressOfFunctions );
-				pwOrdinals       = (PWORD)PE_GET_POINTER( pe, pExportDirectory->AddressOfNameOrdinals );
-				pdwFunctionNames = (PDWORD)PE_GET_POINTER( pe, pExportDirectory->AddressOfNames );
+				pdwFunctions     = (uint32_t *)PE_GET_POINTER( pe, pExportDirectory->AddressOfFunctions );
+				pwOrdinals       = (uint16_t *)PE_GET_POINTER( pe, pExportDirectory->AddressOfNameOrdinals );
+				pdwFunctionNames = (uint32_t *)PE_GET_POINTER( pe, pExportDirectory->AddressOfNames );
 
 				ll_init( &pe->ExportTable.Symbols );
 
@@ -558,13 +558,13 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EX
 				pe->ExportTable.ByOrdinal = HT_CREATE_BY_WORD();
 				pe->ExportTable.ByName	  = HT_CREATE_BY_ISTRING();
 
-				DWORD dwMaxNames = min( dwMaxExports, pExportDirectory->NumberOfNames + pExportDirectory->NumberOfFunctions );
+				uint32_t dwMaxNames = min( dwMaxExports, pExportDirectory->NumberOfNames + pExportDirectory->NumberOfFunctions );
 				
 #pragma region Loop by Name
 
 				PE_SYMBOL *pSymbol = NULL;
 
-				for( DWORD i = 0; i < dwMaxNames; ++i )
+				for( uint32_t i = 0; i < dwMaxNames; ++i )
 				{
 					pSymbol = (PE_SYMBOL *)calloc( 1, sizeof(PE_SYMBOL) );
 
@@ -579,14 +579,14 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EX
 
 						if( PE_IS_VALID_ADDRESS( pSymbol->Address ) )
 						{
-							ULONGLONG qwNameRaw = peRawOffsetByVA( pe, pe->qwBaseAddress + pdwFunctionNames[ i ] );
+							uint64_t qwNameRaw = peRawOffsetByVA( pe, pe->qwBaseAddress + pdwFunctionNames[ i ] );
 
 							if( qwNameRaw != PE_INVALID_OFFSET )
 							{
 								peCopyString( pSymbol->Name, (char *)pe->pData + qwNameRaw, 0xFE );
 							}
 
-							pSymbol->Ordinal = (WORD)pExportDirectory->Base + pwOrdinals[ i ];
+							pSymbol->Ordinal = (uint16_t)pExportDirectory->Base + pwOrdinals[ i ];
 
 							if( pSymbol->Name[0] != 0x00 )
 								ht_add( pe->ExportTable.ByName, pSymbol->Name, pSymbol );
@@ -611,9 +611,9 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EX
 
 #pragma region Loop by Ordinal
 
-				DWORD dwMaxOrdinals = min( pExportDirectory->NumberOfFunctions, dwMaxNames );
+				uint32_t dwMaxOrdinals = min( pExportDirectory->NumberOfFunctions, dwMaxNames );
 
-				for( DWORD i = 0; i < dwMaxOrdinals; i++ )
+				for( uint32_t i = 0; i < dwMaxOrdinals; i++ )
 				{
 					pSymbol = (PE_SYMBOL *)calloc( 1, sizeof(PE_SYMBOL) );
 					
@@ -629,7 +629,7 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EX
 						if( PE_IS_VALID_ADDRESS( pSymbol->Address ) && 
 							ht_get( pe->ExportTable.ByAddress, (void *)pSymbol->Address.VA ) == NULL )
 						{
-							pSymbol->Ordinal = (WORD)( pExportDirectory->Base + i );
+							pSymbol->Ordinal = (uint16_t)( pExportDirectory->Base + i );
 
 							ll_append( &pe->ExportTable.Symbols, pSymbol );
 
@@ -677,9 +677,9 @@ DWORD peParseExportTable( PE *pe, DWORD dwMaxExports, DWORD dwOptions /* = PE_EX
 	return status;
 }
 
-DWORD peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol )
+uint32_t peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol )
 {
-	DWORD status = ERROR_NOT_READY;
+	uint32_t status = ERROR_NOT_READY;
 
 	*ppSymbol = NULL;
 
@@ -693,9 +693,9 @@ DWORD peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymb
 	return status;
 }
 
-DWORD peGetExportedSymbolByAddress( PE *pe, ULONGLONG qwAddress, PE_SYMBOL **ppSymbol )
+uint32_t peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **ppSymbol )
 {
-	DWORD status = ERROR_NOT_READY;
+	uint32_t status = ERROR_NOT_READY;
 
 	*ppSymbol = NULL;
 
@@ -709,9 +709,9 @@ DWORD peGetExportedSymbolByAddress( PE *pe, ULONGLONG qwAddress, PE_SYMBOL **ppS
 	return status;
 }
 
-DWORD peGetExportedSymbolByOrdinal( PE *pe, WORD wOrdinal, PE_SYMBOL **ppSymbol )
+uint32_t peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **ppSymbol )
 {
-	DWORD status = ERROR_NOT_READY;
+	uint32_t status = ERROR_NOT_READY;
 
 	*ppSymbol = NULL;
 
@@ -725,13 +725,13 @@ DWORD peGetExportedSymbolByOrdinal( PE *pe, WORD wOrdinal, PE_SYMBOL **ppSymbol 
 	return status;
 }
 
-DWORD peParseImportTable( PE *pe, DWORD dwOptions /* = PE_IMPORT_OPT_DEFAULT */ )
+uint32_t peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFAULT */ )
 {
-	DWORD status = ERROR_SUCCESS;
+	uint32_t status = ERROR_SUCCESS;
 
 	if( PE_IS_PARSED( pe, IMPORTS ) == FALSE )
 	{
-		DWORD dwImportRVA  = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress ),
+		uint32_t dwImportRVA  = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress ),
 			  dwImportSize = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size );
 
 		if( dwImportRVA != 0 && dwImportSize != 0 )
@@ -747,7 +747,7 @@ DWORD peParseImportTable( PE *pe, DWORD dwOptions /* = PE_IMPORT_OPT_DEFAULT */ 
 			{
 				PIMAGE_IMPORT_DESCRIPTOR pDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)pe->ImportTable.Address.Data,
 										 pImport = NULL;
-				DWORD dwImportCount = 0,
+				uint32_t dwImportCount = 0,
 					  dwThunkRVA,
 					  dwThunkRaw, 
 					  dwRealThunkRaw;
@@ -763,8 +763,8 @@ DWORD peParseImportTable( PE *pe, DWORD dwOptions /* = PE_IMPORT_OPT_DEFAULT */ 
 						break;
 					}
 					
-					dwThunkRVA = pe->qwBaseAddress + pImport->FirstThunk;
-					dwThunkRaw = (DWORD)peRawOffsetByVA( pe, dwThunkRVA );
+					dwThunkRVA = (uint32_t)( pe->qwBaseAddress + pImport->FirstThunk );
+					dwThunkRaw = (uint32_t)peRawOffsetByVA( pe, dwThunkRVA );
 
 					if( dwThunkRaw == PE_INVALID_OFFSET )
 						break;
@@ -791,9 +791,9 @@ DWORD peParseImportTable( PE *pe, DWORD dwOptions /* = PE_IMPORT_OPT_DEFAULT */ 
 						dwRealThunkRaw = dwThunkRaw;
 					else
 						/* Hint Table */
-						dwRealThunkRaw = (DWORD)peRawOffsetByVA( pe, pe->qwBaseAddress + pImport->Characteristics );
+						dwRealThunkRaw = (uint32_t)peRawOffsetByVA( pe, pe->qwBaseAddress + pImport->Characteristics );
 
-					DWORD dwThunkCount = 0;
+					uint32_t dwThunkCount = 0;
 
 #pragma region PE32
 
@@ -808,7 +808,7 @@ DWORD peParseImportTable( PE *pe, DWORD dwOptions /* = PE_IMPORT_OPT_DEFAULT */ 
 						
 						while( pNameThunk && pNameThunk->u1.AddressOfData )
 						{
-							ULONGLONG qwNameRaw;
+							uint64_t qwNameRaw;
 							PIMAGE_IMPORT_BY_NAME pImportByName;
 							PE_SYMBOL *pSymbol = (PE_SYMBOL *)calloc( 1, sizeof(PE_SYMBOL) );
 
@@ -850,7 +850,7 @@ DWORD peParseImportTable( PE *pe, DWORD dwOptions /* = PE_IMPORT_OPT_DEFAULT */ 
 			
 						while( pNameThunk && pNameThunk->u1.AddressOfData )
 						{
-							ULONGLONG qwNameRaw;
+							uint64_t qwNameRaw;
 							PIMAGE_IMPORT_BY_NAME pImportByName;
 							PE_SYMBOL *pSymbol = (PE_SYMBOL *)calloc( 1, sizeof(PE_SYMBOL) );
 
@@ -964,9 +964,9 @@ next_module:
 	return status;
 }
 
-DWORD peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule )
+uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule )
 {
-	DWORD status = ERROR_NOT_READY;
+	uint32_t status = ERROR_NOT_READY;
 
 	if( PE_IS_PARSED( pe, IMPORTS ) == TRUE )
 	{
@@ -989,7 +989,7 @@ DWORD peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE *
 	return status;
 }
 
-DWORD peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol )
+uint32_t peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol )
 {
 	if( ppSymbol )
 	{
@@ -1003,7 +1003,7 @@ DWORD peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName,
 	}
 }
 
-DWORD peExtractStrings( PE *pe, DWORD dwMinLength, bool bFullEncoding )
+uint32_t peExtractStrings( PE *pe, uint32_t dwMinLength, bool bFullEncoding )
 {
 	if( PE_IS_PARSED( pe, STRINGS ) == FALSE )
 	{

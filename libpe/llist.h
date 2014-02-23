@@ -19,7 +19,8 @@
 */
 #pragma once
 
-#include <Windows.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 typedef struct _ll_item
 {
@@ -32,7 +33,7 @@ typedef struct
 {
 	ll_item_t *head;
 	ll_item_t *tail;
-	DWORD      elements;
+	uint32_t   elements;
 }
 ll_t;
 

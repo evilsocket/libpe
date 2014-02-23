@@ -17,9 +17,8 @@
  * You should have received a copy of the GNU General Public License
  * along with libpe.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <memory.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #define HT_N_BUCKETS 65535
 
@@ -36,10 +35,10 @@ typedef struct ht_entry
 ht_entry_t;
 
 //! protypes used for function pointers
-typedef void         *(* ht_copy_t)( void *k );
-typedef int           (* ht_cmp_t)( void *a, void *b );
-typedef unsigned long (* ht_hash_t)( void *k );
-typedef void          (* ht_free_t)( void *k );
+typedef void    *(* ht_copy_t)( void *k );
+typedef int32_t  (* ht_cmp_t)( void *a, void *b );
+typedef uint32_t (* ht_hash_t)( void *k );
+typedef void     (* ht_free_t)( void *k );
 
 //! the main hashtable structure
 typedef struct
@@ -97,12 +96,12 @@ void *ht_get( ht_t *ht, void *key );
 //! @param ht the ht_t pointer created with ht_create.
 void  ht_destroy( ht_t *ht );
 
-int			  ht_qword_cmp( void *a, void *b );
-int			  ht_dword_cmp( void *a, void *b );
-int			  ht_word_cmp( void *a, void *b );
-unsigned long ht_str_ihash( void *k );
-unsigned long ht_str_hash( void *k );
-unsigned long ht_wstr_hash( void *k );
+int32_t  ht_qword_cmp( void *a, void *b );
+int32_t  ht_dword_cmp( void *a, void *b );
+int32_t  ht_word_cmp( void *a, void *b );
+uint32_t ht_str_ihash( void *k );
+uint32_t ht_str_hash( void *k );
+uint32_t ht_wstr_hash( void *k );
 
 #define HT_CREATE_BY_QWORD() \
 	ht_create( NULL, ht_qword_cmp, NULL, NULL, NULL, NULL )
