@@ -204,16 +204,16 @@ static int peIsPrintable( int byte, PE_STRING_ENCODING encoding )
 	return encoding == Ascii ? ( byte >= -1 && byte <= 255 && isprint(byte) ) : iswprint(byte);
 }
 
-template< typename T> void peExtractStrings( PE *pe, uint32_t dwMinSize, PE_STRING_ENCODING encoding, PE_STRING_DUP dup, ht_t *LookupTable )
+template<typename T> void peExtractStrings( PE *pe, uint32_t dwMinSize, PE_STRING_ENCODING encoding, PE_STRING_DUP dup, ht_t *LookupTable )
 {
 #define STRING_BUFF_SIZE 0xFFFF
 
 	T zBuffer[STRING_BUFF_SIZE] = {0};
 	int byte = 0;
-	uint32_t dwOffset, dwCurrent = 0;
+	uint32_t dwOffset, dwEnd = ( pe->dwFileSize - sizeof(T) ), dwCurrent = 0;
 	PE_STRING *pString = NULL;
 
-	for( dwOffset = 0; dwOffset < pe->dwFileSize; dwOffset += sizeof(T) )
+	for( dwOffset = 0; dwOffset < dwEnd; ++dwOffset )
 	{
 		byte = *(T *)&pe->pData[dwOffset];
 		if( peIsPrintable( byte, encoding ) == false )
