@@ -251,7 +251,7 @@ template<typename T> void peExtractStrings( PE *pe, uint32_t dwMinSize, PE_STRIN
 
 #pragma region Internals
 
-uint32_t peParseBuffer( PE *pe )
+PE_STATUS peParseBuffer( PE *pe )
 {
 #define PE_SAFE_CAST( WHAT, TYPE, POS ) \
 	if( POS < pe->dwFileSize && pe->dwFileSize - POS >= sizeof(TYPE) ) \
@@ -260,19 +260,19 @@ uint32_t peParseBuffer( PE *pe )
 	} \
 	else \
 	{ \
-		return ERROR_FILE_CORRUPT; \
+		return PE_UNEXPECTED_EOF; \
 	} \
 
 	PE_SAFE_CAST( pe->Headers.DOS, IMAGE_DOS_HEADER, 0 );
 	if( pe->Headers.DOS->e_magic != IMAGE_DOS_SIGNATURE )
 	{
-		return ERROR_NOT_SUPPORTED;
+		return PE_NOT_PE;
 	}
 
 	PE_SAFE_CAST( pe->Headers.NT, IMAGE_NT_HEADERS, (ULONG)pe->Headers.DOS->e_lfanew );
 	if( pe->Headers.NT->Signature != IMAGE_NT_SIGNATURE )
 	{
-		return ERROR_NOT_SUPPORTED;
+		return PE_NOT_PE;
 	}
 
 	if( pe->Headers.NT->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC )
@@ -295,7 +295,7 @@ uint32_t peParseBuffer( PE *pe )
 	}
 	else
 	{
-		return ERROR_NOT_SUPPORTED;
+		return PE_NOT_PE;
 	}
 
 	pe->Sections.dwNumber = pe->Headers.NT->FileHeader.NumberOfSections;
@@ -311,7 +311,7 @@ uint32_t peParseBuffer( PE *pe )
 
 	PE_SET_PARSED( pe, ENTRY );
 
-	return ERROR_SUCCESS;
+	return PE_SUCCESS;
 }
 
 /*
@@ -324,9 +324,9 @@ uint32_t peParseBuffer( PE *pe )
  * - The Windows directory. The GetWindowsDirectory function retrieves the path of this directory.
  * - The directories listed in the PATH environment variable.
  */
-uint32_t peLocateModule( PE *exe, PE_IMPORT_MODULE *pModule, PE *peModule )
+PE_STATUS peLocateModule( PE *exe, PE_IMPORT_MODULE *pModule, PE *peModule )
 {
-	uint32_t status = ERROR_NOT_FOUND;
+	PE_STATUS status = PE_NOT_FOUND;
 	char szExeFilePath[MAX_PATH + 1] = {0},
 		 szModuleFilePath[MAX_PATH + 1] = {0},
 		 szSystemDirectory[MAX_PATH + 1] = {0},
@@ -402,9 +402,9 @@ uint32_t peLocateModule( PE *exe, PE_IMPORT_MODULE *pModule, PE *peModule )
 
 #pragma region API
 
-uint32_t peOpenFile( PE *pe, const char *pszFileName )
+PE_STATUS peOpenFile( PE *pe, const char *pszFileName )
 {
-	uint32_t status = ERROR_SUCCESS;
+	PE_STATUS status = PE_SUCCESS;
 
 	ZeroMemory( pe, sizeof(PE) );
 
@@ -423,7 +423,7 @@ uint32_t peOpenFile( PE *pe, const char *pszFileName )
 
     if( pe->hFile == INVALID_HANDLE_VALUE )
     {
-        status = GetLastError();
+        status = PE_OPEN_FAILED;
 		goto done;
     }
 
@@ -432,20 +432,20 @@ uint32_t peOpenFile( PE *pe, const char *pszFileName )
     pe->hMap = CreateFileMapping( pe->hFile, NULL, PAGE_READONLY, 0, 0, NULL );
     if( pe->hMap == NULL )
     {
-        status = GetLastError();
+        status = PE_MMAP_FAILED;
 		goto done;
     }
 
 	pe->pData = (uint8_t *)MapViewOfFile( pe->hMap, FILE_MAP_READ, 0, 0, 0 );
     if( pe->pData == NULL )
     {
-        status = GetLastError();
+        status = PE_MMAP_FAILED;
 		goto done;
     }
 
     if( pe->dwFileSize < 10 || ( pe->pData[0] != 'M' || pe->pData[1] != 'Z' ) )
     {
-		status = ERROR_NOT_SUPPORTED;
+		status = PE_NOT_PE;
 		goto done;
     }
 
@@ -453,7 +453,7 @@ uint32_t peOpenFile( PE *pe, const char *pszFileName )
 
 done:
 
-	if( status != ERROR_SUCCESS )
+	if( status != PE_SUCCESS )
 	{
 		peClose(pe);
 	}
@@ -461,9 +461,9 @@ done:
 	return status;
 }
 
-uint32_t peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize )
+PE_STATUS peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize )
 {
-	uint32_t status = ERROR_SUCCESS;
+	PE_STATUS status = PE_SUCCESS;
 
 	ZeroMemory( pe, sizeof(PE) );
 
@@ -471,7 +471,7 @@ uint32_t peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize )
 
 	if( dwSize < 10 || ( pData[0] != 'M' || pData[1] != 'Z' ) )
     {
-		status = ERROR_NOT_SUPPORTED;
+		status = PE_NOT_PE;
 		goto done;
     }
 
@@ -482,7 +482,7 @@ uint32_t peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize )
 
 done:
 
-	if( status != ERROR_SUCCESS )
+	if( status != PE_SUCCESS )
 	{
 		peClose(pe);
 	}
@@ -533,14 +533,14 @@ PIMAGE_SECTION_HEADER peGetSectionByAddress( PE *pe, uint64_t qwVirtualAddress )
 	return NULL;
 }
 
-uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /* = PE_EXPORT_OPT_DEFAULT */ )
+PE_STATUS peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /* = PE_EXPORT_OPT_DEFAULT */ )
 {
-	uint32_t status = ERROR_SUCCESS;
+	PE_STATUS status = PE_SUCCESS;
 
 	if( PE_IS_PARSED( pe, EXPORTS ) == FALSE )
 	{
 		uint32_t dwExportRVA  = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress ),
-			  dwExportSize = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size );
+			     dwExportSize = PE_HEADERS_OPT_FIELD( pe, DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size );
 
 		if( dwExportRVA != 0 && dwExportSize != 0 )
 		{
@@ -683,7 +683,7 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 			}
 			else
 			{
-				status = ERROR_UNKNOWN_PROPERTY;
+				status = PE_DIRECTORY_NOT_FOUND;
 			}
 		}
 		
@@ -693,9 +693,9 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 	return status;
 }
 
-uint32_t peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol )
+PE_STATUS peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol )
 {
-	uint32_t status = ERROR_NOT_READY;
+	PE_STATUS status = PE_NOT_PARSED;
 
 	*ppSymbol = NULL;
 
@@ -703,15 +703,15 @@ uint32_t peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppS
 	{
 		*ppSymbol = (PE_SYMBOL *)ht_get( pe->ExportTable.ByName, (void *)pszName  );
 
-		status = *ppSymbol == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+		status = *ppSymbol == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 	}
 
 	return status;
 }
 
-uint32_t peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **ppSymbol )
+PE_STATUS peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **ppSymbol )
 {
-	uint32_t status = ERROR_NOT_READY;
+	PE_STATUS status = PE_NOT_PARSED;
 
 	*ppSymbol = NULL;
 
@@ -719,15 +719,15 @@ uint32_t peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **p
 	{
 		*ppSymbol = (PE_SYMBOL *)ht_get( pe->ExportTable.ByAddress, (void *)qwAddress  );
 
-		status = *ppSymbol == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+		status = *ppSymbol == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 	}
 
 	return status;
 }
 
-uint32_t peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **ppSymbol )
+PE_STATUS peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **ppSymbol )
 {
-	uint32_t status = ERROR_NOT_READY;
+	PE_STATUS status = PE_NOT_PARSED;
 
 	*ppSymbol = NULL;
 
@@ -735,15 +735,15 @@ uint32_t peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **pp
 	{
 		*ppSymbol = (PE_SYMBOL *)ht_get( pe->ExportTable.ByOrdinal, (void *)wOrdinal );
 
-		status = *ppSymbol == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+		status = *ppSymbol == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 	}
 
 	return status;
 }
 
-uint32_t peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFAULT */ )
+PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFAULT */ )
 {
-	uint32_t status = ERROR_SUCCESS;
+	PE_STATUS status = PE_SUCCESS;
 
 	if( PE_IS_PARSED( pe, IMPORTS ) == FALSE )
 	{
@@ -902,7 +902,7 @@ uint32_t peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFAU
 			}
 			else
 			{
-				status = ERROR_UNKNOWN_PROPERTY;
+				status = PE_DIRECTORY_NOT_FOUND;
 			}
 
 #pragma region Options
@@ -982,9 +982,9 @@ next_module:
 	return status;
 }
 
-uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule )
+PE_STATUS peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule )
 {
-	uint32_t status = ERROR_NOT_READY;
+	PE_STATUS status = PE_NOT_PARSED;
 
 	if( PE_IS_PARSED( pe, IMPORTS ) == TRUE )
 	{
@@ -992,11 +992,11 @@ uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODUL
 		{
 			*ppModule = (PE_IMPORT_MODULE *)ht_get( pe->ImportTable.ByName, (void *)pszName  );
 
-			status = *ppModule == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+			status = *ppModule == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 		}
 		else
 		{
-			status = ht_get( pe->ImportTable.ByName, (void *)pszName  ) == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+			status = ht_get( pe->ImportTable.ByName, (void *)pszName  ) == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 		}
 	}
 	else if( ppModule != NULL )
@@ -1007,17 +1007,17 @@ uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODUL
 	return status;
 }
 
-uint32_t peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol )
+PE_STATUS peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol )
 {
 	if( ppSymbol )
 	{
 		*ppSymbol = (PE_SYMBOL *)ht_get( pModule->ByName, (void *)pszName );
 
-		return *ppSymbol == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+		return *ppSymbol == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 	}
 	else
 	{
-		return ht_get( pModule->ByName, (void *)pszName ) == NULL ? ERROR_NOT_FOUND : ERROR_SUCCESS;
+		return ht_get( pModule->ByName, (void *)pszName ) == NULL ? PE_NOT_FOUND : PE_SUCCESS;
 	}
 }
 
@@ -1092,6 +1092,35 @@ void peClose( PE *pe )
 
 		ll_destroy( &pe->ImportTable.Modules, free );
 		ht_destroy( pe->ImportTable.ByName );
+	}
+
+	// free strings
+	if( pe->Strings.List.elements )
+	{
+		ll_foreach_data( &pe->Strings.List, lli, PE_STRING, pString )
+		{
+			if( pString )
+			{
+				if( pString->Data != NULL )
+				{
+					free( pString->Data );
+				}
+
+				free( pString );
+			}
+		}
+
+		ll_destroy( &pe->Strings.List, NULL );
+		
+		if( pe->Strings.AsciiTable )
+		{
+			ht_destroy( pe->Strings.AsciiTable );
+		}
+
+		if( pe->Strings.UnicodeTable )
+		{
+			ht_destroy( pe->Strings.UnicodeTable );
+		}
 	}
 
 	ZeroMemory( pe, sizeof(PE) );

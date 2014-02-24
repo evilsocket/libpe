@@ -83,6 +83,30 @@
 	ll_foreach_data( &(PE)->Strings.List, lli, PE_STRING, STR_VAR_NAME )
 
 /*
+ * Return codes enumeration.
+ */
+typedef enum
+{
+	//! Operation succesfully completed.
+	PE_SUCCESS,
+	//! Unexpected end of file while parsing it.
+	PE_UNEXPECTED_EOF,
+	//! The file is not a PE32 or PE32+ file.
+	PE_NOT_PE,
+	//! File or object not found.
+	PE_NOT_FOUND,
+	//! Failed to open file.
+	PE_OPEN_FAILED,
+	//! Failed to memory map the file.
+	PE_MMAP_FAILED,
+	//! Error while parsing the specified directory, not found.
+	PE_DIRECTORY_NOT_FOUND,
+	//! A specific part of the PE should be parsed before this operation can be executed.
+	PE_NOT_PARSED
+}
+PE_STATUS;
+
+/*
  * A structure representing an address inside the PE.
  */
 typedef struct
@@ -275,13 +299,12 @@ extern "C"
 //! @param pe pointer to a PE structure to be filled with file data.
 //! @param pszFileName name of the file to be parsed.
 //!
-//! @return ERROR_SUCCESS if the file was succesfully recognized and parsed as a PE,
-//!			ERROR_NOT_SUPPORTED if it wasn't recognized as a PE file or a specific 
-//!			Windows error according to error cause.
+//! @return PE_SUCCESS if the file was succesfully recognized and parsed as a PE,
+//!			otherwise one of the PE_STATUS enumeration values.
 //!
 //! @remarks This function will set the PE_SECTIONS_PARSED and PE_ENTRY_PARSED parse 
 //!			 status flags.
-uint32_t peOpenFile( PE *pe, const char *pszFileName );
+PE_STATUS peOpenFile( PE *pe, const char *pszFileName );
 
 //! Parse a memory buffer.
 //!
@@ -289,13 +312,12 @@ uint32_t peOpenFile( PE *pe, const char *pszFileName );
 //! @param pData a pointer to the buffer to be parsed.
 //! @param dwSize size of the buffer.
 //!
-//! @return ERROR_SUCCESS if the file was succesfully recognized and parsed as a PE,
-//!			ERROR_NOT_SUPPORTED if it wasn't recognized as a PE file or a specific 
-//!			Windows error according to error cause.
+//! @return PE_SUCCESS if the buffer was succesfully recognized and parsed as a PE,
+//!			otherwise one of the PE_STATUS enumeration values.
 //!
 //! @remarks This function will set the PE_SECTIONS_PARSED and PE_ENTRY_PARSED parse 
 //!			 status flags.
-uint32_t peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize );
+PE_STATUS peOpenBuffer( PE *pe, uint8_t * pData, uint32_t dwSize );
 
 //! Translate a virtual address inside the PE into a PE_ADDRESS structure.
 //!
@@ -337,11 +359,10 @@ PIMAGE_SECTION_HEADER peGetSectionByAddress( PE *pe, uint64_t qwVirtualAddress )
 //! @param dwMaxExports maximum number of exported symbols to parse.
 //! @param dwOptions optional options mask composed by PE_EXPORT_OPT_* flags.
 //!
-//! @return ERROR_SUCCESS on success or ERROR_UNKNOWN_PROPERTY if the export table
-//!			was not found.
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
 //!
 //! @remarks This function will set the PE_EXPORTS_PARSED parse status flags.
-uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions = PE_EXPORT_OPT_DEFAULT );
+PE_STATUS peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions = PE_EXPORT_OPT_DEFAULT );
 
 //! Search an exported symbol given its name.
 //!
@@ -349,10 +370,8 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions =
 //! @param pszName name of the symbol to search.
 //! @param ppSymbol pointer to a pointer that will be set to the symbol found.
 //!
-//! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the export table was
-//!			not yet parsed or ERROR_NOT_FOUND if the specified symbol can't be
-//!			found.
-uint32_t peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol );
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
+PE_STATUS peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppSymbol );
 
 //! Search an exported symbol given its virtual address.
 //!
@@ -360,12 +379,10 @@ uint32_t peGetExportedSymbolByName( PE *pe, const char *pszName, PE_SYMBOL **ppS
 //! @param dwAddress address of the symbol to search.
 //! @param ppSymbol pointer to a pointer that will be set to the symbol found.
 //!
-//! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the export table was
-//!			not yet parsed or ERROR_NOT_FOUND if the specified symbol can't be
-//!			found.
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
 //!
 //! @remarks The address must be in its absolute form ( base + rva ).
-uint32_t peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **ppSymbol );
+PE_STATUS peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **ppSymbol );
 
 //! Search an exported symbol given its ordinal.
 //!
@@ -373,21 +390,18 @@ uint32_t peGetExportedSymbolByAddress( PE *pe, uint64_t qwAddress, PE_SYMBOL **p
 //! @param wOrdinal ordinal of the symbol to search.
 //! @param ppSymbol pointer to a pointer that will be set to the symbol found.
 //!
-//! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the export table was
-//!			not yet parsed or ERROR_NOT_FOUND if the specified symbol can't be
-//!			found.
-uint32_t peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **ppSymbol );
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
+PE_STATUS peGetExportedSymbolByOrdinal( PE *pe, uint16_t wOrdinal, PE_SYMBOL **ppSymbol );
 
 //! Parse the import table of the PE.
 //!
 //! @param pe pointer to a PE structure initialized with peOpen(File|Buffer).
 //! @param dwOptions optional options mask composed by PE_IMPORT_OPT_* flags.
 //!
-//! @return ERROR_SUCCESS on success or ERROR_UNKNOWN_PROPERTY if the export table
-//!			was not found.
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
 //!
 //! @remarks This function will set the PE_IMPORTS_PARSED parse status flags.
-uint32_t peParseImportTable( PE *pe, uint32_t dwOptions = PE_IMPORT_OPT_DEFAULT );
+PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions = PE_IMPORT_OPT_DEFAULT );
 
 //! Search an imported module given its name.
 //!
@@ -395,10 +409,8 @@ uint32_t peParseImportTable( PE *pe, uint32_t dwOptions = PE_IMPORT_OPT_DEFAULT 
 //! @param pszName name of the module to search.
 //! @param ppModule pointer to a pointer that will be set to the module found.
 //!
-//! @return ERROR_SUCCESS on success, ERROR_NOT_READY if the import table was
-//!			not yet parsed or ERROR_NOT_FOUND if the specified module can't be
-//!			found.
-uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule );
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
+PE_STATUS peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODULE **ppModule );
 
 //! Search an imported symbol given its name.
 //!
@@ -406,9 +418,8 @@ uint32_t peGetImportedModuleByName( PE *pe, const char *pszName, PE_IMPORT_MODUL
 //! @param pszName name of the symbol to search.
 //! @param ppSymbol pointer to a pointer that will be set to the symbol found.
 //!
-//! @return ERROR_SUCCESS on success, or ERROR_NOT_FOUND if the specified 
-//!			symbol can't found.
-uint32_t peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol );
+//! @return PE_SUCCESS on success or one of the PE_STATUS enumeration values.
+PE_STATUS peGetImportedSymbolByName( PE_IMPORT_MODULE *pModule, const char *pszName, PE_SYMBOL **ppSymbol );
 
 //! Extract printable strings from the PE file.
 //!

@@ -23,7 +23,7 @@
 int main( int argc, char **argv )
 {
 	PE pe = {0}; 
-	DWORD status;
+	PE_STATUS status;
 
 	if( argc < 2 )
 	{
@@ -32,7 +32,7 @@ int main( int argc, char **argv )
 	}
 
 	status = peOpenFile( &pe, argv[1] );
-	if( status != ERROR_SUCCESS )
+	if( status != PE_SUCCESS )
 	{
 		printf( "Open error: %08X\n", status );
 		goto done;
@@ -64,7 +64,7 @@ int main( int argc, char **argv )
 
 	// parse the export table with a maximum of 100 exported symbols
 	status = peParseExportTable( &pe, 100 );
-	if( status != ERROR_SUCCESS )
+	if( status != PE_SUCCESS )
 	{
 		printf( "Export parse error: %d\n", status );
 		goto done;
@@ -85,7 +85,7 @@ int main( int argc, char **argv )
 
 	// print any entry in the import table ( resolve imports by ordinals into imports by name when possible )
 	status = peParseImportTable( &pe, PE_IMPORT_OPT_RESOLVE_ORDINALS );
-	if( status == ERROR_SUCCESS && PE_HAS_TABLE( &pe, ImportTable ) )
+	if( status == PE_SUCCESS && PE_HAS_TABLE( &pe, ImportTable ) )
 	{
 		printf( "IMPORT TABLE ( %d ) [%08llX]:\n", pe.ImportTable.Modules.elements, pe.ImportTable.Address.VA );
 
