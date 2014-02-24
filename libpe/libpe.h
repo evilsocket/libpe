@@ -93,6 +93,8 @@ typedef struct
 	uint64_t Offset;
 	//! Pointer to data inside the file.
 	uint8_t *Data;
+	//! Size of the area this address points to if applicable.
+	uint64_t Size;
 }
 PE_ADDRESS;
 

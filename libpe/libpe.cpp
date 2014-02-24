@@ -53,6 +53,7 @@
 	( (SEC_HEAD)->SizeOfRawData > 0 ? (SEC_HEAD)->SizeOfRawData : (SEC_HEAD)->Misc.VirtualSize )
 
 #define PE_ADDRESS_FROM_VA( PE, PE_ADDR, VADDR ) \
+	(PE_ADDR).Size   = 0; \
 	(PE_ADDR).VA     = VADDR; \
 	(PE_ADDR).Offset = peRawOffsetByVA( (PE), (PE_ADDR).VA ); \
 	if( (PE_ADDR).Offset == PE_INVALID_OFFSET ) \
@@ -63,6 +64,7 @@
 	} \
 	else \
 	{ \
+		(PE_ADDR).Size = (PE)->dwFileSize - (PE_ADDR).Offset; \
 		(PE_ADDR).Data = &(PE)->pData[(PE_ADDR).Offset]; \
 	} 
 
@@ -551,6 +553,8 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 			
 			if( PE_IS_VALID_ADDRESS( pe->ExportTable.Address ) )
 			{
+				pe->ExportTable.Address.Size = (uint64_t)dwExportSize;
+
 				PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)pe->ExportTable.Address.Data;
 				
 				uint32_t *pdwFunctions, 
@@ -757,6 +761,8 @@ uint32_t peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFAU
 
 			if( PE_IS_VALID_ADDRESS( pe->ImportTable.Address ) )
 			{
+				pe->ImportTable.Address.Size = (uint64_t)dwImportSize;
+
 				PIMAGE_IMPORT_DESCRIPTOR pDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)pe->ImportTable.Address.Data,
 										 pImport = NULL;
 				uint32_t dwImportCount = 0,
