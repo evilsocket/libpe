@@ -558,6 +558,17 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 				pe->ExportTable.ByOrdinal = HT_CREATE_BY_WORD();
 				pe->ExportTable.ByName	  = HT_CREATE_BY_ISTRING();
 
+#define SHOULD_APPEND_SYMBOL( SYM ) \
+	( PE_IS_VALID_ADDRESS( (SYM)->Address ) && ht_get( pe->ExportTable.ByAddress, (void *)(SYM)->Address.VA ) == NULL )
+
+#define APPEND_SYMBOL( SYM ) \
+	if( (SYM)->Name[0] != 0x00 ){ \
+		ht_add( pe->ExportTable.ByName, (SYM)->Name, (SYM) ); \
+	} \
+	ll_append( &pe->ExportTable.Symbols, (SYM) ); \
+	ht_add( pe->ExportTable.ByAddress, (void *)(SYM)->Address.VA, (SYM) ); \
+	ht_add( pe->ExportTable.ByOrdinal, (void *)(SYM)->Ordinal, (SYM) )
+
 				uint32_t dwMaxNames = min( dwMaxExports, pExportDirectory->NumberOfNames + pExportDirectory->NumberOfFunctions );
 				
 #pragma region Loop by Name
@@ -577,7 +588,7 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 							pe->qwBaseAddress + pdwFunctions[ pwOrdinals[ i ] ] 
 						);
 
-						if( PE_IS_VALID_ADDRESS( pSymbol->Address ) )
+						if( SHOULD_APPEND_SYMBOL( pSymbol ) )
 						{
 							uint64_t qwNameRaw = peRawOffsetByVA( pe, pe->qwBaseAddress + pdwFunctionNames[ i ] );
 
@@ -586,15 +597,7 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 								peCopyString( pSymbol->Name, (char *)pe->pData + qwNameRaw, 0xFE );
 							}
 
-							pSymbol->Ordinal = (uint16_t)pExportDirectory->Base + pwOrdinals[ i ];
-
-							if( pSymbol->Name[0] != 0x00 )
-								ht_add( pe->ExportTable.ByName, pSymbol->Name, pSymbol );
-
-							ll_append( &pe->ExportTable.Symbols, pSymbol );
-
-							ht_add( pe->ExportTable.ByAddress, (void *)pSymbol->Address.VA, pSymbol );
-							ht_add( pe->ExportTable.ByOrdinal, (void *)pSymbol->Ordinal, pSymbol );
+							APPEND_SYMBOL( pSymbol );
 						}
 						else
 						{
@@ -626,15 +629,11 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 							pe->qwBaseAddress + pdwFunctions[ i ] 
 						);
 
-						if( PE_IS_VALID_ADDRESS( pSymbol->Address ) && 
-							ht_get( pe->ExportTable.ByAddress, (void *)pSymbol->Address.VA ) == NULL )
+						if( SHOULD_APPEND_SYMBOL( pSymbol ) )
 						{
 							pSymbol->Ordinal = (uint16_t)( pExportDirectory->Base + i );
 
-							ll_append( &pe->ExportTable.Symbols, pSymbol );
-
-							ht_add( pe->ExportTable.ByAddress, (void *)pSymbol->Address.VA, pSymbol );
-							ht_add( pe->ExportTable.ByOrdinal, (void *)pSymbol->Ordinal, pSymbol );
+							APPEND_SYMBOL( pSymbol );
 						}
 						else
 						{
@@ -648,6 +647,9 @@ uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /
 				}
 
 #pragma endregion
+
+#undef APPEND_SYMBOL
+#undef SHOULD_APPEND_SYMBOL
 
 				if( PE_MASK_HAS_BIT( dwOptions, PE_EXPORT_OPT_DEMANGLE_NAMES ) )
 				{
