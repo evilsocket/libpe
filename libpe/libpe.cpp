@@ -521,6 +521,16 @@ PIMAGE_SECTION_HEADER peGetSectionByName( PE *pe, const char *pszName )
 	return NULL;
 }
 
+PIMAGE_SECTION_HEADER peGetSectionByAddress( PE *pe, uint64_t qwVirtualAddress )
+{
+	if( PE_IS_PARSED( pe, SECTIONS ) == TRUE )
+	{
+		return peSectionByVA( pe, qwVirtualAddress );
+	}
+
+	return NULL;
+}
+
 uint32_t peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions /* = PE_EXPORT_OPT_DEFAULT */ )
 {
 	uint32_t status = ERROR_SUCCESS;

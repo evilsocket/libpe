@@ -321,6 +321,14 @@ BOOL peResolveSectionAddress( PE *pe, PIMAGE_SECTION_HEADER pSection, PE_ADDRESS
 //! @return A pointer to the section header if the section was found, otherwise NULL.
 PIMAGE_SECTION_HEADER peGetSectionByName( PE *pe, const char *pszName );
 
+//! Get pointer to the section header containing the given address.
+//!
+//! @param pe pointer to a PE structure to be filled with file data.
+//! @param qwVirtualAddress the virtual address to search inside sections, it must be absolute ( base + RVA )..
+//!
+//! @return A pointer to the section header if the address was found inside a valid section, otherwise NULL.
+PIMAGE_SECTION_HEADER peGetSectionByAddress( PE *pe, uint64_t qwVirtualAddress );
+
 //! Parse the export table of the PE.
 //!
 //! @param pe pointer to a PE structure initialized with peOpen(File|Buffer).
