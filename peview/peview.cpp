@@ -109,21 +109,22 @@ int main( int argc, char **argv )
 
 	/*
 	 * Uncomment to print ascii and unicode strings.
+	 *
+	 *	peExtractStrings( &pe, 5, true );
+	 *
+	 *	PE_FOREACH_STRING( &pe, pString )
+	 *	{
+	 *		if( pString->Encoding == Ascii )
+	 *		{
+	 *			printf( "%s\n", pString->Data );
+	 *		}
+	 *		else
+	 *		{
+	 *			printf( "%S\n", pString->Data );
+	 *		}
+	 *	}
 	 */
-	 peExtractStrings( &pe, 5, true );
-	 
-	 PE_FOREACH_STRING( &pe, pString )
-	 {
-	 	if( pString->Encoding == Ascii )
-	 	{
-	 		printf( "%s\n", pString->Data );
-	 	}
-	 	else
-	 	{
-	 		printf( "%S\n", pString->Data );
-	 	}
-	 }
- 
+
 done:
 
 	peClose(&pe);
