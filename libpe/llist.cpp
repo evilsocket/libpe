@@ -60,7 +60,7 @@ void ll_destroy( ll_t *ll, ll_data_free_t data_free )
 		{
 			ll_item_t *next = entry->next;
 		
-			if( data_free != NULL )
+			if( data_free != NULL && entry->data != NULL )
 			{
 				data_free( entry->data );
 			}
