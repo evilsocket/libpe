@@ -21,7 +21,7 @@
 #include <string.h>
 #include <ctype.h>
 
-inline ht_entry_t *ht_make_entry( void *key, void *value ) 
+inline ht_entry_t *ht_make_entry( void *key, void *value )
 {
 	ht_entry_t *entry = (ht_entry_t *)malloc( sizeof(ht_entry_t) );
 
@@ -57,7 +57,7 @@ void *ht_add( ht_t *ht, void *key, void *value )
 	bucket = ht->buckets[ hash ];
 
     void *v = ht->val_copy ? ht->val_copy(value) : value;
-    
+
     // new bucket
     if( bucket == NULL )
     {
@@ -76,8 +76,8 @@ void *ht_add( ht_t *ht, void *key, void *value )
 		        entry->value = v;
                 break;
             }
-        }    
-        
+        }
+
         // nothing found, append new entry
         if( entry == NULL )
         {
@@ -92,19 +92,19 @@ void *ht_get( ht_t *ht, void *key )
 {
 	if( ht && key )
 	{
-		hash_t hash = ( ht->key_hash ? ht->key_hash( key ) % HT_N_BUCKETS : (uint32_t)key % HT_N_BUCKETS );    
-		ht_entry_t *entry = NULL,               
+		hash_t hash = ( ht->key_hash ? ht->key_hash( key ) % HT_N_BUCKETS : (uint32_t)key % HT_N_BUCKETS );
+		ht_entry_t *entry = NULL,
 				   *bucket = NULL;
 
 		bucket = ht->buckets[ hash ];
-    
+
 		for( entry = bucket; entry; entry = entry->next )
 		{
 			if( ht->key_cmp( key, entry->key ) == 0 )
 			{
 				return entry->value;
 			}
-		}    
+		}
 	}
 
     return NULL;
@@ -112,12 +112,12 @@ void *ht_get( ht_t *ht, void *key )
 
 void ht_destroy( ht_t *ht )
 {
-    ht_entry_t *entry = NULL,               
+    ht_entry_t *entry = NULL,
                *bucket = NULL;
     hash_t hash = 0;
 
     for( hash = 0; hash < HT_N_BUCKETS; ++hash )
-    {    
+    {
         entry = ht->buckets[ hash ];
         while( entry )
         {

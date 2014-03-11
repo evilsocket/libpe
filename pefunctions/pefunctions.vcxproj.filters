@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pefunctions.cpp" />
+    <ClCompile Include="distorm\decoder.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\distorm.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\instructions.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\insts.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\mnemonics.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\operands.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\prefix.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\textdefs.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+    <ClCompile Include="distorm\wstring.c">
+      <Filter>distorm</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="distorm">
+      <UniqueIdentifier>{33d4ec99-0f62-489d-a877-6d6e48e2e616}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="distorm\config.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\decoder.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\distorm.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\instructions.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\insts.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\mnemonics.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\operands.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\prefix.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\textdefs.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\wstring.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+    <ClInclude Include="distorm\x86defs.h">
+      <Filter>distorm</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

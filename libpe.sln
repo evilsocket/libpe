@@ -8,6 +8,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "peview", "peview\peview.vcx
 		{EB5CFFE8-2113-450C-955B-05F703B608A4} = {EB5CFFE8-2113-450C-955B-05F703B608A4}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pefunctions", "pefunctions\pefunctions.vcxproj", "{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EB5CFFE8-2113-450C-955B-05F703B608A4} = {EB5CFFE8-2113-450C-955B-05F703B608A4}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -26,6 +31,12 @@ Global
 		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Release|Win32.ActiveCfg = Release|Win32
 		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Release|Win32.Build.0 = Release|Win32
 		{B48A9CCC-B3FA-4408-8CB0-3D10D4A81170}.Release|Win32.Deploy.0 = Release|Win32
+		{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}.Debug|Win32.Build.0 = Debug|Win32
+		{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}.Debug|Win32.Deploy.0 = Debug|Win32
+		{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}.Release|Win32.ActiveCfg = Release|Win32
+		{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}.Release|Win32.Build.0 = Release|Win32
+		{EDC4E292-4941-4E4A-8368-1EB98C73CDB3}.Release|Win32.Deploy.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
