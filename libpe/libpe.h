@@ -236,6 +236,8 @@ typedef struct
 	uint32_t ByteLength;
 	//! Length in characters of the string.
 	uint32_t CharLength;
+	//! Absolute raw offset inside the file.
+	uint32_t Offset;
 	//! Encoding of the string.
 	PE_STRING_ENCODING Encoding;
 }

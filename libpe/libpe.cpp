@@ -232,6 +232,7 @@ template<typename T> void peExtractStrings( PE *pe, uint32_t dwMinSize, PE_STRIN
 					pString->CharLength = dwCurrent - 1;
 					pString->ByteLength = pString->CharLength * sizeof(T);
 					pString->Data		= (uint8_t *)dup(zBuffer);
+					pString->Offset		= dwOffset;
 
 					ht_add( LookupTable, pString->Data, pString );
 					ll_append( &pe->Strings.List, pString );
