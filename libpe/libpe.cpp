@@ -843,7 +843,7 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 							if( qwNameRaw != PE_INVALID_OFFSET )
 							{
 								pImportByName = (PIMAGE_IMPORT_BY_NAME)( pe->pData + qwNameRaw );
-								pszSymbolName = pImportByName->Name;
+								pszSymbolName = (char *)&pImportByName->Name[0];
 
 								peCopyString( pSymbol->Name, pszSymbolName, 0xFE );
 
@@ -885,7 +885,7 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 							if( qwNameRaw != PE_INVALID_OFFSET )
 							{
 								pImportByName = (PIMAGE_IMPORT_BY_NAME)( pe->pData + qwNameRaw );
-								pszSymbolName = pImportByName->Name;
+								pszSymbolName = (char *)&pImportByName->Name[0];
 
 								peCopyString( pSymbol->Name, pszSymbolName, 0xFE );
 
