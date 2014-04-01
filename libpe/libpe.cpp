@@ -215,7 +215,7 @@ template<typename T> void peExtractStrings( PE *pe, uint32_t dwMinSize, PE_STRIN
 	uint32_t dwOffset, dwEnd = ( pe->dwFileSize - sizeof(T) ), dwCurrent = 0;
 	PE_STRING *pString = NULL;
 
-	for( dwOffset = 0; dwOffset < dwEnd; ++dwOffset )
+	for( dwOffset = 0; dwOffset < dwEnd; dwOffset += sizeof(T) )
 	{
 		byte = *(T *)&pe->pData[dwOffset];
 		if( peIsPrintable( byte, encoding ) == false )
@@ -584,13 +584,13 @@ PE_STATUS peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions 
 	ht_add( pe->ExportTable.ByAddress, (void *)(SYM)->Address.VA, (SYM) ); \
 	ht_add( pe->ExportTable.ByOrdinal, (void *)(SYM)->Ordinal, (SYM) )
 
-				uint32_t dwMaxNames = min( dwMaxExports, pExportDirectory->NumberOfNames + pExportDirectory->NumberOfFunctions );
+				dwMaxExports = min( dwMaxExports, pExportDirectory->NumberOfNames + pExportDirectory->NumberOfFunctions );
 
 #pragma region Loop by Name
 
 				PE_SYMBOL *pSymbol = NULL;
 
-				for( uint32_t i = 0; i < dwMaxNames; ++i )
+				for( uint32_t i = 0; i < dwMaxExports; ++i )
 				{
 					pSymbol = (PE_SYMBOL *)calloc( 1, sizeof(PE_SYMBOL) );
 
@@ -612,6 +612,8 @@ PE_STATUS peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions 
 								peCopyString( pSymbol->Name, (char *)pe->pData + qwNameRaw, 0xFE );
 							}
 
+							pSymbol->Ordinal = pwOrdinals[i] + 1;
+
 							APPEND_SYMBOL( pSymbol );
 						}
 						else
@@ -629,7 +631,7 @@ PE_STATUS peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions 
 
 #pragma region Loop by Ordinal
 
-				uint32_t dwMaxOrdinals = min( pExportDirectory->NumberOfFunctions, dwMaxNames );
+				uint32_t dwMaxOrdinals = min( pExportDirectory->NumberOfFunctions, dwMaxExports );
 
 				for( uint32_t i = 0; i < dwMaxOrdinals; i++ )
 				{
@@ -658,6 +660,11 @@ PE_STATUS peParseExportTable( PE *pe, uint32_t dwMaxExports, uint32_t dwOptions 
 					__except(EXCEPTION_EXECUTE_HANDLER)
 					{
 						free( pSymbol );
+					}
+
+					if( pe->ExportTable.Symbols.elements == dwMaxExports )
+					{
+						break;
 					}
 				}
 
@@ -1046,7 +1053,7 @@ uint32_t peExtractStrings( PE *pe, uint32_t dwMinLength, bool bFullEncoding )
 
 void peClose( PE *pe )
 {
-	if( pe->hFile != INVALID_HANDLE_VALUE )
+	if( pe->hFile && pe->hFile != INVALID_HANDLE_VALUE )
     {
         CloseHandle( pe->hFile );
     }
