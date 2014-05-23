@@ -24,6 +24,9 @@
 
 typedef unsigned short hash_t;
 
+#pragma pack( push )
+#pragma pack( 1 )
+
 //! hashtable bucket entry list item
 typedef struct ht_entry
 {
@@ -33,6 +36,15 @@ typedef struct ht_entry
     struct ht_entry *next;
 }
 ht_entry_t;
+
+#pragma pack( pop )
+
+typedef struct
+{
+	hash_t		h;
+	ht_entry_t *e;
+}
+ht_iterator_t;
 
 //! protypes used for function pointers
 typedef void    *(* ht_copy_t)( void *k );
@@ -82,6 +94,11 @@ ht_t *ht_create( ht_copy_t key_copy, ht_cmp_t key_cmp, ht_hash_t key_hash, ht_fr
 //!
 //! @return a pointer the previous object with the given key if any, otherwise NULL.
 void *ht_add( ht_t *ht, void *key, void *value );
+
+bool ht_first( ht_t *ht, ht_iterator_t *iter );
+bool ht_next( ht_t *ht, ht_iterator_t *iter );
+
+void ht_remove( ht_t *ht, void *key );
 
 //! Get an object from the hashtable.
 //! 

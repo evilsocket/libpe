@@ -110,6 +110,93 @@ void *ht_get( ht_t *ht, void *key )
     return NULL;
 }
 
+bool ht_first( ht_t *ht, ht_iterator_t *iter )
+{
+    for( iter->h = 0; iter->h < HT_N_BUCKETS; ++iter->h )
+    {
+        iter->e = ht->buckets[ iter->h ];
+        if( iter->e )
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool ht_next( ht_t *ht, ht_iterator_t *iter )
+{
+	if( iter->h == HT_N_BUCKETS )
+	{
+		return false;
+	}
+
+	iter->e = iter->e->next;
+
+	if( iter->e == NULL )
+	{
+		do
+		{
+			iter->e = ht->buckets[ ++iter->h ];
+		}
+		while( iter->e == NULL && iter->h < HT_N_BUCKETS );
+		
+		return ( iter->e && iter->h < HT_N_BUCKETS ? true : false );
+	}
+
+	return true;
+}
+
+void ht_remove( ht_t *ht, void *key )
+{
+    hash_t hash = ( ht->key_hash ? ht->key_hash( key ) % HT_N_BUCKETS : (unsigned long)key % HT_N_BUCKETS );
+    ht_entry_t *entry = NULL,
+               *prev = NULL,
+               *bucket = NULL;
+
+	bucket = ht->buckets[ hash ];
+
+    // new bucket
+    if( bucket != NULL )
+    {
+        for( entry = bucket; entry; entry = entry->next )
+        {
+            if( ht->key_cmp( key, entry->key ) == 0 )
+            {
+                break;
+            }
+
+			prev = entry;
+        }
+
+        // nothing found, append new entry
+        if( entry != NULL )
+        {
+			if( ht->key_free )
+			{
+				ht->key_free( entry->key );
+			}
+
+			if( ht->val_free )
+			{
+				ht->val_free( entry->value );
+			}
+
+			// first element of the bucket
+			if( prev == NULL )
+			{
+				ht->buckets[ hash ] = entry->next;
+			}
+			else
+			{
+				prev->next = entry->next;
+			}
+
+			free( entry );
+        }
+    }
+}
+
 void ht_destroy( ht_t *ht )
 {
     ht_entry_t *entry = NULL,
