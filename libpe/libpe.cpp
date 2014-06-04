@@ -1058,7 +1058,7 @@ void peClose( PE *pe )
         CloseHandle( pe->hFile );
     }
 
-	if( pe->pData != NULL )
+	if( pe->pData != NULL && pe->hMap != NULL )
     {
 		UnmapViewOfFile( pe->pData );
     }
