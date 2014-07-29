@@ -774,9 +774,12 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 				PIMAGE_IMPORT_DESCRIPTOR pDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)pe->ImportTable.Address.Data,
 										 pImport = NULL;
 				uint32_t dwImportCount = 0,
-					  dwThunkRVA,
-					  dwThunkRaw,
-					  dwRealThunkRaw;
+					  dwThunkRVA;
+					 // dwThunkRaw,
+					 // dwRealThunkRaw;
+
+				uint64_t qwRealThunkRaw,
+					     qwThunkRaw;
 
 				ll_init( &pe->ImportTable.Modules );
 
@@ -790,10 +793,10 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 					}
 
 					dwThunkRVA = (uint32_t)( pe->qwBaseAddress + pImport->FirstThunk );
-					dwThunkRaw = (uint32_t)peRawOffsetByVA( pe, dwThunkRVA );
-
-					if( dwThunkRaw == PE_INVALID_OFFSET )
-						break;
+					qwThunkRaw = peRawOffsetByVA( pe, dwThunkRVA );
+					
+					if( qwThunkRaw == PE_INVALID_OFFSET )
+						continue;
 
 					char *pszDllName = (char *)PE_GET_POINTER( pe, pImport->Name ),
 						 *pszSymbolName = NULL;
@@ -814,10 +817,13 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 
 					if( pImport->Characteristics == 0 )
 						/* Borland compilers don't produce Hint Table */
-						dwRealThunkRaw = dwThunkRaw;
+						qwRealThunkRaw = qwThunkRaw;
 					else
 						/* Hint Table */
-						dwRealThunkRaw = (uint32_t)peRawOffsetByVA( pe, pe->qwBaseAddress + pImport->Characteristics );
+						qwRealThunkRaw = peRawOffsetByVA( pe, pe->qwBaseAddress + pImport->Characteristics );
+					
+					if( qwRealThunkRaw == PE_INVALID_OFFSET )
+						continue;
 
 					uint32_t dwThunkCount = 0;
 
@@ -829,8 +835,8 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 						PIMAGE_THUNK_DATA32 pAddressThunk;
 						PIMAGE_THUNK_DATA32 pNameThunk;
 
-						pAddressThunk = (PIMAGE_THUNK_DATA32)( pe->pData + dwThunkRaw );
-						pNameThunk    = (PIMAGE_THUNK_DATA32)( pe->pData + dwRealThunkRaw );
+						pAddressThunk = (PIMAGE_THUNK_DATA32)( pe->pData + qwThunkRaw );
+						pNameThunk    = (PIMAGE_THUNK_DATA32)( pe->pData + (uint32_t)qwRealThunkRaw );
 
 						while( pNameThunk && pNameThunk->u1.AddressOfData )
 						{
@@ -871,8 +877,8 @@ PE_STATUS peParseImportTable( PE *pe, uint32_t dwOptions /* = PE_IMPORT_OPT_DEFA
 						PIMAGE_THUNK_DATA64 pAddressThunk;
 						PIMAGE_THUNK_DATA64 pNameThunk;
 
-						pAddressThunk = (PIMAGE_THUNK_DATA64)( pe->pData + dwThunkRaw );
-						pNameThunk    = (PIMAGE_THUNK_DATA64)( pe->pData + dwRealThunkRaw );
+						pAddressThunk = (PIMAGE_THUNK_DATA64)( pe->pData + qwThunkRaw );
+						pNameThunk    = (PIMAGE_THUNK_DATA64)( pe->pData + qwRealThunkRaw );
 
 						while( pNameThunk && pNameThunk->u1.AddressOfData )
 						{
