@@ -1096,6 +1096,11 @@ void peClose( PE *pe )
 	}
 
 	// free the import table
+	if( pe->ImportTable.ByName )
+	{
+		ht_destroy( pe->ImportTable.ByName );
+	}
+
 	if( pe->ImportTable.Modules.elements )
 	{
 		PE_FOREACH_IMPORTED_MODULE( pe, pModule )
@@ -1105,7 +1110,6 @@ void peClose( PE *pe )
 		}
 
 		ll_destroy( &pe->ImportTable.Modules, free );
-		ht_destroy( pe->ImportTable.ByName );
 	}
 
 	// free strings
