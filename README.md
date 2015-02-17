@@ -31,3 +31,6 @@ Copyleft of Simone Margaritelli <evilsocket@gmail.com>
 ## License
 
 Release under the GPL 3 license.
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/evilsocket/libpe/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
